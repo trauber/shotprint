@@ -1,31 +1,7 @@
 #!/bin/bash
-# Print a junior size rollabindable album from shotwell collections.
+# Print an junisor size rollabindable album from shotwell collections.
 # Requires sqlite3, gnu rec-utils, netpbm, and pdftex.
 # Currently supports only jpeg.
-
-# shotprint - print a junior size rollabindable ablum from shotwell collections.
-#    Copyright (C) 2012  Rich Traube
-#
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-#    Contacts for Rich Traube: rich.traube@gmail.com
-#
-#    Rich Traube
-#    2 Mindy Drive
-#    Moorestown, NJ 08057
-
-
 
 if [ ${#@} != 1 ]; then
   echo "Usage: `basename $0` <shotwell-tag>"
@@ -40,7 +16,7 @@ TAG="$1"
 RECFILE=photos.rec
 RESCALETEMPLATE=rescale.fmt
 RESCALESCRIPT=rescale.sh
-PHOTODIR=./photos
+PHOTODIR=photos
 LISTTEMPLATE=photos.fmt
 TEXLIST=photos.tex
 ALBUM=album.tex
@@ -108,7 +84,7 @@ if [ ! -f $LISTTEMPLATE ]; then
 cat<<EOT > $LISTTEMPLATE
 \addtocounter{figs}{1}
 \begin{SCfigure*}
-\includegraphics{"$PHOTODIR/{{spfile}}"}
+\includegraphics{$PHOTODIR/{{spfile}}}
 \caption*{ {{title}} \it{ {{sptime}} }}
 \end{SCfigure*}
 \ifthenelse{\equal{ \intcalcMod{\value{figs}}{2}}{0}}
@@ -153,17 +129,15 @@ cat<<EOT > $ALBUM
 \usepackage[rightcaption,ragged]{sidecap}
 \title{$TITLE}
 \author{$AUTHOR}
+\pagestyle{empty}
 \begin{document}
 \maketitle
 \thispagestyle{empty}
 \newpage
+
 \input{$TEXLIST}
 
-This album was generated with shotprint, a shell script for making \LaTeX\ junior 
-size rollabind printouts from Shotwell photo collections. For more
-information please see https://github.com/trauber/shotprint .
 
-\pagestyle{empty}
 \end{document}
 EOT
 fi
