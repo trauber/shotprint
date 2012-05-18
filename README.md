@@ -7,7 +7,7 @@ rec-utils, netpbm, and pdftex.
 	usage: shotprint <shotwell-tag>
 
 Run it in an empty directory outside of your shotwell hierarchy.
-It currently supports jpeg only.  LaTeX sources written to file pdflatex
-produces the output.
+It currently supports jpeg only.  LaTeX sources written to file, not
+to stdout.  pdflatex produces the output.
 
 
