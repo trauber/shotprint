@@ -1,5 +1,5 @@
 #!/bin/bash
-# Print an junisor size rollabindable album from shotwell collections.
+# Print an junior size rollabindable album from shotwell collections.
 # Requires sqlite3, gnu rec-utils, netpbm, and pdftex.
 # Currently supports only jpeg.
 
@@ -17,18 +17,85 @@ RECFILE=photos.rec
 RESCALETEMPLATE=rescale.fmt
 RESCALESCRIPT=rescale.sh
 PHOTODIR=photos
+ROTNRESTEMPLATE=rotnres.fmt
+ROTNRESSCRIPT=rotnres.sh
 LISTTEMPLATE=photos.fmt
 TEXLIST=photos.tex
 ALBUM=album.tex
 TEXCOM=pdflatex
-
-rm -f $TEXLIST
 
 
 if [ ! -d $PHOTODIR ]; then
 	mkdir $PHOTODIR
 fi
 
+############## TEMPLATES ##################################
+
+
+if [ ! -f $LISTTEMPLATE ]; then
+cat<<EOT > $LISTTEMPLATE
+\addtocounter{figs}{1}
+\begin{SCfigure*}
+\includegraphics{$PHOTODIR/{{spfile}}}
+\caption*{ {{title}} \it{ {{sptime}} }}
+\end{SCfigure*}
+\ifthenelse{\equal{ \intcalcMod{\value{figs}}{2}}{0}}
+{\thispagestyle{empty}\clearpage}
+{}
+EOT
+fi
+
+
+# Template for scaling script.
+if [ ! -f $RESCALETEMPLATE ]; then
+	cat<<-EOT> $RESCALETEMPLATE
+if [ ! -f "$PHOTODIR/{{spfile}}" ]; then
+	jpegtopnm {{filename}} \
+	| pnmscale -ysize 350 \
+	| pnmtojpeg -quality=100 -progressive \
+	> "$PHOTODIR/{{spfile}}"
+fi
+EOT
+fi
+
+# Template for rotating and rescaling
+
+if [ ! -f $ROTNRESTEMPLATE ]; then
+	cat<<-EOT> $ROTNRESTEMPLATE
+if [ ! -f "$PHOTODIR/{{spfile}}" ]; then
+	cp {{filename}} tmp.jpg
+	rotate -r 90 tmp.jpg
+	jpegtopnm tmp.jpg \
+	| pnmscale -ysize 350 \
+	| pnmtojpeg -quality=100 -progressive \
+	> "$PHOTODIR/{{spfile}}"
+fi
+EOT
+fi
+		
+if [ ! -f $ALBUM ]; then
+cat<<EOT > $ALBUM
+\documentclass[letterpaper]{article}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{xifthen}
+\usepackage{intcalc} % Use intcalcMod 2 0 to clear page very two images.
+\newcounter{figs}
+\usepackage[right=.25in,left=.125in,top=.25in,bottom=.50in]{geometry}
+\usepackage[rightcaption,ragged]{sidecap}
+\title{$TITLE}
+\author{$AUTHOR}
+\pagestyle{empty}
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+\newpage
+\input{$TEXLIST}
+\end{document}
+EOT
+fi
+
+############# /TEMPLATES ##################################
 
 
 # Start recutils file.
@@ -48,7 +115,7 @@ sqlite3  $SHOTWELLDB '
 		}
 	}
 ' | xargs -I{} sqlite3 -line $SHOTWELLDB '
-	SELECT filename, exposure_time, title FROM PhotoTable WHERE id="'{}'"
+	SELECT filename, orientation, exposure_time, title FROM PhotoTable WHERE id="'{}'"
 ' | awk '
 {
 	sub(/^\ */,"");
@@ -65,6 +132,7 @@ sqlite3  $SHOTWELLDB '
 		sub(": ",": \"",$0);
 		sub(/$/,"\"",$0);
 		print "\n" $0;
+		print sp1;
 		next; 
 	}
 	if (/^exposure_time: /) {
@@ -72,75 +140,28 @@ sqlite3  $SHOTWELLDB '
 		sub(/^exposure_time: /,"",time);
 		sp2 = "sptime: " strftime("%a %x",time);
 		print;
+		print sp2;
 		next;
 	}
 		print;
-		print sp1;
-		print sp2;
 }' >> $RECFILE
 
 
-if [ ! -f $LISTTEMPLATE ]; then
-cat<<EOT > $LISTTEMPLATE
-\addtocounter{figs}{1}
-\begin{SCfigure*}
-\includegraphics{$PHOTODIR/{{spfile}}}
-\caption*{ {{title}} \it{ {{sptime}} }}
-\end{SCfigure*}
-\ifthenelse{\equal{ \intcalcMod{\value{figs}}{2}}{0}}
-{\thispagestyle{empty}\clearpage}
-{}
-EOT
-fi
-
+#rm -f $TEXLIST
 
 recsel $RECFILE | recfmt -f $LISTTEMPLATE > $TEXLIST
 
-
-if [ -z $(cat $TEXLIST) ]; then
+if [ -z "$(cat $TEXLIST)" ]; then
 	echo "$TAG not found in shotwell tag table."
 	exit
 fi
 
-# Template for scaling script.
-if [ ! -f $RESCALETEMPLATE ]; then
-	cat<<-EOT> $RESCALETEMPLATE
-if [ ! -f "$PHOTODIR/{{spfile}}" ]; then
-	jpegtopnm {{filename}} \
-	| pnmscale -ysize 350 \
-	| pnmtojpeg -quality=100 -progressive \
-	> "$PHOTODIR/{{spfile}}"
-fi
-EOT
-fi
+
+recsel -e 'orientation="6"' $RECFILE | recfmt -f "$ROTNRESTEMPLATE" >> $ROTNRESSCRIPT
+. $ROTNRESSCRIPT
 
 recsel $RECFILE | recfmt -f "$RESCALETEMPLATE" >> $RESCALESCRIPT
 . $RESCALESCRIPT
-
-if [ ! -f $ALBUM ]; then
-cat<<EOT > $ALBUM
-\documentclass[letterpaper]{article}
-\usepackage{graphicx}
-\usepackage{caption}
-\usepackage{xifthen}
-\usepackage{intcalc} % Use intcalcMod 2 0 to clear page very two images.
-\newcounter{figs}
-\usepackage[right=.25in,left=.125in,top=.25in,bottom=.50in]{geometry}
-\usepackage[rightcaption,ragged]{sidecap}
-\title{$TITLE}
-\author{$AUTHOR}
-\pagestyle{empty}
-\begin{document}
-\maketitle
-\thispagestyle{empty}
-\newpage
-
-\input{$TEXLIST}
-
-
-\end{document}
-EOT
-fi
 
 $TEXCOM $ALBUM
 
