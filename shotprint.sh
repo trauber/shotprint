@@ -1,7 +1,25 @@
 #!/bin/bash
-# Print an junior size rollabindable album from shotwell collections.
-# Requires sqlite3, gnu rec-utils, netpbm, and pdftex.
-# Currently supports only jpeg.
+#    shotprint - Print a junior size rollabindable album from shotwell tag.
+#    Copyright (C) 2012  Rich Traube
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#    Contacts: rich.traube@gmail.com
+#
+#    Rich Traube
+#    2 Mindy Drive
+#    Moorestown, NJ 08057
 
 if [ ${#@} != 1 ]; then
   echo "Usage: `basename $0` <shotwell-tag>"
@@ -157,10 +175,10 @@ if [ -z "$(cat $TEXLIST)" ]; then
 fi
 
 
-recsel -e 'orientation="6"' $RECFILE | recfmt -f "$ROTNRESTEMPLATE" >> $ROTNRESSCRIPT
+recsel -e 'orientation="6"' $RECFILE | recfmt -f "$ROTNRESTEMPLATE" > $ROTNRESSCRIPT
 . $ROTNRESSCRIPT
 
-recsel $RECFILE | recfmt -f "$RESCALETEMPLATE" >> $RESCALESCRIPT
+recsel $RECFILE | recfmt -f "$RESCALETEMPLATE" > $RESCALESCRIPT
 . $RESCALESCRIPT
 
 $TEXCOM $ALBUM
