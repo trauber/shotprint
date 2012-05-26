@@ -10,8 +10,11 @@ Run it in an empty directory outside of your shotwell hierarchy.
 It currently supports jpeg only.  LaTeX sources written to file, not
 to stdout.  Uses pdflatex for producing album PDF.
 
-- side captions with title and date
+- uses LaTeX photo package
 - rescales images
 - rotates images with 6 orientation in shotwell 90 degrees clockwise
+- flips images with 3 orientation in shotwell 180 degrees
+- debug for reviewing temporary recutil and shell files
+
 
 
